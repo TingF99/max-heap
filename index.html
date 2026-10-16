@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f4f3ec">
+  <title>最大堆積 | HEAP / 01</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202a26;
+      --muted: #727c75;
+      --paper: #f4f3ec;
+      --white: #fffefa;
+      --line: #dcded4;
+      --green: #26735c;
+      --green-dark: #1e5d4a;
+      --green-pale: #e6f0e9;
+      --coral: #cb694d;
+      --coral-pale: #faece6;
+      --gold: #d3a443;
+      --shadow: 0 12px 36px #243c300d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background: radial-gradient(ellipse at 93% 0%, #e1eadf 0, transparent 31%), var(--paper);
+      font-family: "Aptos", "Noto Sans TC", "Microsoft JhengHei", sans-serif;
+    }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .shell { width: min(1160px, calc(100% - 40px)); margin: 0 auto; padding: 26px 0 36px; }
+    .topline { display: flex; justify-content: space-between; align-items: center; padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    .brand { display: flex; align-items: center; gap: 10px; font-size: .78rem; font-weight: 850; letter-spacing: .08em; }
+    .brand-mark { display: grid; place-items: center; width: 34px; aspect-ratio: 1; border-radius: 9px; color: white; background: var(--green); font: 850 .72rem/1 "Cascadia Code", Consolas, monospace; }
+    .topic { color: var(--muted); font-size: .78rem; }
+    header { display: flex; justify-content: space-between; align-items: end; gap: 20px; padding: 27px 0 21px; }
+    .kicker { margin: 0 0 7px; color: var(--green); font-size: .7rem; font-weight: 850; letter-spacing: .12em; }
+    h1 { margin: 0; font-size: clamp(1.8rem, 4vw, 2.65rem); line-height: 1.16; }
+    .subtitle { margin: 8px 0 0; color: var(--muted); font-size: .9rem; }
+    .root-stamp { display: grid; place-items: center; flex: 0 0 74px; width: 74px; aspect-ratio: 1; border: 1px solid #bfd0c1; border-radius: 50%; color: var(--green-dark); background: #edf3eb; }
+    .root-stamp span { margin-bottom: -13px; font-size: .55rem; font-weight: 800; letter-spacing: .1em; }
+    .root-stamp strong { margin-top: -12px; font: 800 1.65rem/1 "Cascadia Code", Consolas, monospace; }
+    .layout { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: start; }
+    .controls { display: grid; gap: 14px; }
+    .panel { min-width: 0; overflow: hidden; border: 1px solid var(--line); border-radius: 8px; background: var(--white); box-shadow: var(--shadow); }
+    .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 15px 17px; border-bottom: 1px solid var(--line); }
+    .panel-heading h2 { margin: 0; font-size: .92rem; }
+    .panel-meta { color: var(--muted); font-size: .68rem; font-weight: 700; letter-spacing: .06em; }
+    .form-pad { display: grid; gap: 11px; padding: 15px 17px 17px; }
+    label { display: grid; gap: 6px; color: #505b53; font-size: .75rem; font-weight: 750; }
+    input { width: 100%; height: 40px; padding: 0 10px; border: 1px solid #d8ddd4; border-radius: 5px; outline: none; color: var(--ink); background: white; font: .83rem "Cascadia Code", Consolas, monospace; }
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 3px #26735c1c; }
+    input::placeholder { color: #9ba29a; }
+    .field-hint { margin: -3px 0 0; color: var(--muted); font-size: .69rem; line-height: 1.5; }
+    .button-row { display: grid; grid-template-columns: 1fr auto; gap: 7px; }
+    .button { min-height: 39px; padding: 8px 11px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); background: white; font-size: .76rem; font-weight: 800; transition: background .15s, border-color .15s, transform .15s; }
+    .button:hover { transform: translateY(-1px); border-color: #aab8aa; background: #f7f9f4; }
+    .button.primary { color: white; border-color: var(--green); background: var(--green); }
+    .button.primary:hover { background: var(--green-dark); }
+    .button.find { color: white; border-color: var(--coral); background: var(--coral); }
+    .button.find:hover { background: #b85b41; }
+    .button.square { width: 40px; padding: 0; font-size: 1.1rem; }
+    .notice { min-height: 17px; margin: 0; color: var(--coral); font-size: .72rem; line-height: 1.45; }
+    .status-pad { padding: 10px 17px 13px; }
+    .status-row { display: flex; justify-content: space-between; gap: 10px; padding: 9px 0; border-bottom: 1px solid #eef0e9; font-size: .75rem; }
+    .status-row:last-child { border: 0; }
+    .status-row span { color: var(--muted); }
+    .status-row strong { font: 750 .78rem "Cascadia Code", Consolas, monospace; }
+    .result { min-height: 58px; padding: 12px 17px 15px; border-top: 1px solid #eef0e9; color: var(--muted); font-size: .74rem; line-height: 1.55; }
+    .result strong { color: var(--ink); }
+    .diagram-panel { min-width: 0; }
+    .diagram-heading { min-height: 55px; }
+    .legend { display: flex; align-items: center; gap: 12px; color: var(--muted); font-size: .68rem; }
+    .legend-item { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
+    .legend-dot { width: 9px; aspect-ratio: 1; border-radius: 50%; background: var(--green); }
+    .legend-dot.found { background: var(--gold); }
+    .tree-scroll { width: 100%; min-height: 490px; overflow: auto; scrollbar-color: #bdc9bd transparent; scrollbar-width: thin; }
+    .tree-canvas { display: block; width: 100%; min-width: 740px; }
+    .tree-empty { display: none; place-items: center; min-height: 430px; padding: 30px; color: var(--muted); text-align: center; font-size: .84rem; }
+    .tree-edge { stroke: #bdc9bd; stroke-width: 2; transition: stroke .18s, stroke-width .18s; }
+    .tree-edge.active { stroke: var(--coral); stroke-width: 4; }
+    .tree-node circle { fill: #f6f8f2; stroke: #b9c8b8; stroke-width: 2; transition: fill .18s, stroke .18s, r .18s; }
+    .tree-node.root circle { fill: var(--green); stroke: var(--green); }
+    .tree-node.root text { fill: white; }
+    .tree-node text { fill: var(--ink); text-anchor: middle; dominant-baseline: central; font: 750 15px "Cascadia Code", Consolas, monospace; pointer-events: none; }
+    .tree-node.visited circle { fill: var(--coral-pale); stroke: var(--coral); }
+    .tree-node.current circle { fill: var(--gold); stroke: #a77b24; }
+    .tree-node.current text { fill: #302810; }
+    .tree-node.root.visited circle { fill: var(--green); stroke: var(--coral); stroke-width: 4; }
+    .tree-node.root.current circle { fill: var(--gold); stroke: #a77b24; }
+    .traversal { display: grid; gap: 10px; padding: 13px 17px 15px; border-top: 1px solid var(--line); }
+    .traversal-header { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .traversal-label { color: var(--muted); font-size: .69rem; font-weight: 750; }
+    .traversal-select { min-height: 34px; padding: 5px 28px 5px 9px; border: 1px solid var(--line); border-radius: 5px; color: var(--ink); background: white; font-size: .73rem; font-weight: 700; }
+    .traversal-values { display: flex; flex-wrap: wrap; gap: 5px; }
+    .search-comparison { padding: 14px 17px 16px; border-top: 1px solid var(--line); }
+    .search-comparison h3 { margin: 0 0 8px; font-size: .84rem; }
+    .search-methods { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .search-method { min-width: 0; padding: 4px 15px 4px 0; }
+    .search-method + .search-method { padding-right: 0; padding-left: 15px; border-left: 1px solid var(--line); }
+    .search-method h4 { margin: 0 0 6px; font-size: .76rem; }
+    .method-result { min-height: 36px; margin: 0 0 8px; color: var(--muted); font-size: .73rem; line-height: 1.5; }
+    .complexity { display: grid; gap: 4px; color: var(--muted); font-size: .68rem; line-height: 1.5; }
+    .complexity strong { color: var(--ink); font-family: "Cascadia Code", Consolas, monospace; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+    .value-chip { min-width: 31px; padding: 4px 6px; border: 1px solid #dfe4d8; border-radius: 4px; background: #f7f8f2; text-align: center; font: 700 .68rem "Cascadia Code", Consolas, monospace; }
+    .value-chip.root-chip { color: white; border-color: var(--green); background: var(--green); }
+    .footnote { margin: 14px 0 0; color: var(--muted); font-size: .7rem; text-align: right; }
+    @media (max-width: 800px) {
+      .shell { width: min(100% - 28px, 620px); padding-top: 18px; }
+      .layout { grid-template-columns: minmax(0, 1fr); }
+      .controls { grid-template-columns: 1fr 1fr; align-items: start; }
+      .diagram-panel { grid-row: 1; }
+      .tree-scroll { min-height: 390px; }
+      .tree-empty { min-height: 340px; }
+    }
+    @media (max-width: 520px) {
+      .shell { width: calc(100% - 22px); }
+      header { padding: 22px 0 17px; }
+      .root-stamp { flex-basis: 60px; width: 60px; }
+      .root-stamp strong { font-size: 1.4rem; }
+      .controls { grid-template-columns: 1fr; }
+      .diagram-heading { align-items: start; flex-direction: column; }
+      .legend { padding-bottom: 1px; }
+      .tree-scroll { min-height: 350px; }
+      .tree-empty { min-height: 300px; }
+      .search-methods { grid-template-columns: 1fr; }
+      .search-method { padding-right: 0; }
+      .search-method + .search-method { padding: 11px 0 0; border-top: 1px solid var(--line); border-left: 0; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <div class="topline">
+      <div class="brand"><span class="brand-mark">MAX</span><span>DATA STRUCTURE / 02</span></div>
+      <span class="topic">最大堆積 · Max Heap</span>
+    </div>
+
+    <header>
+      <div>
+        <p class="kicker">MAX-HEAPIFY</p>
+        <h1>讓最大的數字浮到頂端。</h1>
+        <p class="subtitle">輸入一組整數，自動整理成父節點不小於子節點的堆積樹。</p>
+      </div>
+      <div class="root-stamp" aria-label="最大值"><span>MAX</span><strong id="heapMaximum">—</strong></div>
+    </header>
+
+    <div class="layout">
+      <aside class="controls">
+        <section class="panel" aria-labelledby="insertHeading">
+          <div class="panel-heading"><h2 id="insertHeading">建立堆積</h2><span class="panel-meta">BUILD</span></div>
+          <form class="form-pad" id="sequenceForm">
+            <label for="sequenceInput">輸入整數
+              <input id="sequenceInput" value="42, 18, 35, 12, 8, 27, 31, 6" placeholder="例如：42, 18, 35, 12" autocomplete="off" spellcheck="false">
+            </label>
+            <p class="field-hint">用逗號或空格分隔；相同數字可以重複。</p>
+            <button class="button primary" type="submit">建立 Max Heap</button>
+            <p class="notice" id="sequenceNotice" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="addHeading">
+          <div class="panel-heading"><h2 id="addHeading">新增數字</h2><span class="panel-meta">INSERT</span></div>
+          <form class="form-pad" id="addForm">
+            <label for="addInput">加入一個整數
+              <input id="addInput" type="number" step="1" placeholder="輸入整數" inputmode="numeric">
+            </label>
+            <div class="button-row">
+              <button class="button primary" type="submit">加入堆積</button>
+              <button class="button square" id="resetButton" type="button" aria-label="清空堆積" title="清空堆積">↺</button>
+            </div>
+            <p class="notice" id="addNotice" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="searchHeading">
+          <div class="panel-heading"><h2 id="searchHeading">搜尋比較</h2><span class="panel-meta">SEARCH</span></div>
+          <form class="form-pad" id="searchForm">
+            <label for="targetInput">要搜尋的整數
+              <input id="targetInput" type="number" step="1" placeholder="輸入整數" inputmode="numeric">
+            </label>
+            <button class="button find" type="submit">比較兩種搜尋</button>
+            <p class="notice" id="searchNotice" aria-live="polite"></p>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="statsHeading">
+          <div class="panel-heading"><h2 id="statsHeading">堆積資訊</h2><span class="panel-meta">OVERVIEW</span></div>
+          <div class="status-pad">
+            <div class="status-row"><span>堆積大小</span><strong id="nodeCount">0</strong></div>
+            <div class="status-row"><span>樹高</span><strong id="treeHeight">0 層</strong></div>
+            <div class="status-row"><span>葉節點</span><strong id="leafCount">0</strong></div>
+            <div class="status-row"><span>堆積性質</span><strong id="heapStatus">—</strong></div>
+          </div>
+          <div class="result" id="heapResult" aria-live="polite">輸入數字後即可建立堆積。</div>
+        </section>
+      </aside>
+
+      <section class="panel diagram-panel" aria-labelledby="treeHeading">
+        <div class="panel-heading diagram-heading">
+          <h2 id="treeHeading">Max Heap 堆積樹</h2>
+          <div class="legend" aria-label="圖例">
+            <span class="legend-item"><i class="legend-dot"></i>最大值</span>
+            <span class="legend-item">父節點 ≥ 子節點</span>
+          </div>
+        </div>
+        <div class="tree-scroll" id="treeScroll" role="region" aria-label="最大堆積樹圖形，可水平捲動">
+          <svg class="tree-canvas" id="treeCanvas" role="img" aria-label="最大堆積樹"></svg>
+          <div class="tree-empty" id="treeEmpty">目前沒有數字，輸入一組整數來建立堆積樹。</div>
+        </div>
+        <div class="traversal">
+          <div class="traversal-header">
+            <span class="traversal-label">陣列表示（由上而下、由左至右）</span>
+            <span class="panel-meta" id="arrayLength">0 個元素</span>
+          </div>
+          <div class="traversal-values" id="heapArray" aria-label="堆積陣列"></div>
+        </div>
+        <section class="search-comparison" aria-labelledby="comparisonHeading">
+          <h3 id="comparisonHeading">搜尋結果與時間複雜度</h3>
+          <div class="search-methods">
+            <article class="search-method">
+              <h4>Max Heap 搜尋</h4>
+              <p class="method-result" id="heapSearchResult">輸入目標值後開始比較。</p>
+              <div class="complexity">
+                <span>時間：最佳 <strong>O(1)</strong> · 最差 <strong>O(n)</strong></span>
+                <span>額外空間：最差 <strong>O(n)</strong></span>
+              </div>
+            </article>
+            <article class="search-method">
+              <h4>氣泡排序 + 二分搜尋</h4>
+              <p class="method-result" id="bubbleSearchResult">先排序，再搜尋目標值。</p>
+              <div class="complexity">
+                <span>排序：最佳 <strong>O(n)</strong> · 平均／最差 <strong>O(n²)</strong></span>
+                <span>二分搜尋：<strong>O(log n)</strong>；整體最差 <strong>O(n²)</strong></span>
+              </div>
+            </article>
+          </div>
+        </section>
+      </section>
+    </div>
+    <p class="footnote">Max Heap：每個父節點的值都大於或等於其子節點</p>
+  </main>
+
+  <script>
+    const SVG_NS = 'http://www.w3.org/2000/svg';
+    let heap = [];
+    let searchedIndices = [];
+    let foundHeapIndex = -1;
+
+    const elements = {
+      sequenceForm: document.querySelector('#sequenceForm'),
+      sequenceInput: document.querySelector('#sequenceInput'),
+      sequenceNotice: document.querySelector('#sequenceNotice'),
+      addForm: document.querySelector('#addForm'),
+      addInput: document.querySelector('#addInput'),
+      addNotice: document.querySelector('#addNotice'),
+      searchForm: document.querySelector('#searchForm'),
+      targetInput: document.querySelector('#targetInput'),
+      searchNotice: document.querySelector('#searchNotice'),
+      heapSearchResult: document.querySelector('#heapSearchResult'),
+      bubbleSearchResult: document.querySelector('#bubbleSearchResult'),
+      resetButton: document.querySelector('#resetButton'),
+      treeCanvas: document.querySelector('#treeCanvas'),
+      treeEmpty: document.querySelector('#treeEmpty'),
+      nodeCount: document.querySelector('#nodeCount'),
+      treeHeight: document.querySelector('#treeHeight'),
+      leafCount: document.querySelector('#leafCount'),
+      heapStatus: document.querySelector('#heapStatus'),
+      heapMaximum: document.querySelector('#heapMaximum'),
+      heapResult: document.querySelector('#heapResult'),
+      arrayLength: document.querySelector('#arrayLength'),
+      heapArray: document.querySelector('#heapArray')
+    };
+
+    function siftDown(values, index, size = values.length) {
+      while (true) {
+        const left = index * 2 + 1;
+        const right = left + 1;
+        let largest = index;
+        if (left < size && values[left] > values[largest]) largest = left;
+        if (right < size && values[right] > values[largest]) largest = right;
+        if (largest === index) return;
+        [values[index], values[largest]] = [values[largest], values[index]];
+        index = largest;
+      }
+    }
+
+    function buildHeap(values) {
+      const result = [...values];
+      for (let index = Math.floor(result.length / 2) - 1; index >= 0; index -= 1) {
+        siftDown(result, index);
+      }
+      return result;
+    }
+
+    function insertValue(value) {
+      heap.push(value);
+      let index = heap.length - 1;
+      while (index > 0) {
+        const parent = Math.floor((index - 1) / 2);
+        if (heap[parent] >= heap[index]) break;
+        [heap[parent], heap[index]] = [heap[index], heap[parent]];
+        index = parent;
+      }
+    }
+
+    function parseSequence(raw) {
+      const text = raw.trim();
+      if (!text) return [];
+      const tokens = text.split(/[\s,，、;；]+/).filter(Boolean);
+      const values = tokens.map(Number);
+      if (values.some((value) => !Number.isSafeInteger(value))) return null;
+      return values;
+    }
+
+    function createSvgElement(name, attributes = {}) {
+      const element = document.createElementNS(SVG_NS, name);
+      Object.entries(attributes).forEach(([key, value]) => element.setAttribute(key, value));
+      return element;
+    }
+
+    function renderHeap() {
+      const size = heap.length;
+      const maxDepth = size ? Math.floor(Math.log2(size)) : -1;
+      const leafCount = heap.reduce((count, _value, index) => count + (index * 2 + 1 >= size ? 1 : 0), 0);
+      const isValid = heap.every((value, index) => {
+        const left = index * 2 + 1;
+        const right = left + 1;
+        return (left >= size || value >= heap[left]) && (right >= size || value >= heap[right]);
+      });
+
+      elements.nodeCount.textContent = String(size);
+      elements.treeHeight.textContent = `${maxDepth + 1} 層`;
+      elements.leafCount.textContent = String(leafCount);
+      elements.heapStatus.textContent = size ? (isValid ? '有效' : '錯誤') : '—';
+      elements.heapMaximum.textContent = size ? String(heap[0]) : '—';
+      elements.arrayLength.textContent = `${size} 個元素`;
+      elements.heapResult.textContent = size
+        ? `目前最大值為 ${heap[0]}，位於根節點。`
+        : '輸入數字後即可建立堆積。';
+
+      elements.heapArray.replaceChildren();
+      heap.forEach((value, index) => {
+        const chip = document.createElement('span');
+        chip.className = `value-chip${index === 0 ? ' root-chip' : ''}`;
+        chip.textContent = String(value);
+        chip.title = `索引 ${index}`;
+        elements.heapArray.append(chip);
+      });
+
+      elements.treeCanvas.replaceChildren();
+      if (!size) {
+        elements.treeCanvas.style.display = 'none';
+        elements.treeEmpty.style.display = 'grid';
+        return;
+      }
+
+      elements.treeCanvas.style.display = 'block';
+      elements.treeEmpty.style.display = 'none';
+      const spacingX = 88;
+      const spacingY = 100;
+      const paddingX = 58;
+      const paddingY = 58;
+      const maxSlots = 2 ** maxDepth;
+      const width = Math.max(740, maxSlots * spacingX + paddingX * 2);
+      const height = Math.max(390, (maxDepth + 1) * spacingY + paddingY * 2);
+      const usableWidth = width - paddingX * 2;
+      const positions = heap.map((_value, index) => {
+        const depth = Math.floor(Math.log2(index + 1));
+        const firstAtDepth = 2 ** depth - 1;
+        const slot = index - firstAtDepth;
+        const slotsAtDepth = 2 ** depth;
+        return {
+          x: paddingX + ((slot + 0.5) / slotsAtDepth) * usableWidth,
+          y: paddingY + depth * spacingY
+        };
+      });
+
+      elements.treeCanvas.setAttribute('viewBox', `0 0 ${width} ${height}`);
+      elements.treeCanvas.setAttribute('width', String(width));
+      elements.treeCanvas.setAttribute('height', String(height));
+      elements.treeCanvas.style.width = `${width}px`;
+      elements.treeCanvas.setAttribute('aria-label', `包含 ${size} 個數字的最大堆積樹，根節點為 ${heap[0]}`);
+
+      heap.forEach((_value, index) => {
+        if (index === 0) return;
+        const parent = Math.floor((index - 1) / 2);
+        const from = positions[parent];
+        const to = positions[index];
+        elements.treeCanvas.append(createSvgElement('line', {
+          x1: from.x, y1: from.y + 26, x2: to.x, y2: to.y - 26, class: 'tree-edge'
+        }));
+      });
+
+      heap.forEach((value, index) => {
+        const { x, y } = positions[index];
+        const classes = ['tree-node'];
+        if (index === 0) classes.push('root');
+        if (searchedIndices.includes(index)) classes.push('visited');
+        if (index === foundHeapIndex) classes.push('current');
+        const group = createSvgElement('g', {
+          class: classes.join(' '),
+          transform: `translate(${x} ${y})`
+        });
+        const label = String(value);
+        const radius = Math.min(36, Math.max(26, label.length * 4.2 + 9));
+        group.append(createSvgElement('circle', { r: radius }));
+        const text = createSvgElement('text', { y: 1 });
+        text.textContent = label;
+        if (label.length > 8) text.setAttribute('font-size', '11');
+        group.append(text);
+        elements.treeCanvas.append(group);
+      });
+    }
+
+    elements.sequenceForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const values = parseSequence(elements.sequenceInput.value);
+      if (values === null) {
+        elements.sequenceNotice.textContent = '請輸入有效整數，並用逗號或空格分隔。';
+        return;
+      }
+      heap = buildHeap(values);
+      searchedIndices = [];
+      foundHeapIndex = -1;
+      elements.heapSearchResult.textContent = '輸入目標值後開始比較。';
+      elements.bubbleSearchResult.textContent = '先排序，再搜尋目標值。';
+      elements.sequenceNotice.textContent = `已建立 ${heap.length} 個節點的最大堆積。`;
+      elements.addNotice.textContent = '';
+      renderHeap();
+    });
+
+    elements.addForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const raw = elements.addInput.value;
+      const value = Number(raw);
+      if (!raw || !Number.isSafeInteger(value)) {
+        elements.addNotice.textContent = '請輸入一個有效整數。';
+        return;
+      }
+      insertValue(value);
+      searchedIndices = [];
+      foundHeapIndex = -1;
+      elements.heapSearchResult.textContent = '輸入目標值後開始比較。';
+      elements.bubbleSearchResult.textContent = '先排序，再搜尋目標值。';
+      elements.addInput.value = '';
+      elements.addNotice.textContent = `已加入 ${value}，並重新調整堆積。`;
+      elements.sequenceNotice.textContent = '';
+      renderHeap();
+    });
+
+    elements.searchForm.addEventListener('submit', (event) => {
+      event.preventDefault();
+      const raw = elements.targetInput.value;
+      const target = Number(raw);
+      if (!raw || !Number.isSafeInteger(target)) {
+        elements.searchNotice.textContent = '請輸入一個有效整數。';
+        return;
+      }
+      if (!heap.length) {
+        elements.searchNotice.textContent = '請先建立堆積，再開始搜尋。';
+        return;
+      }
+
+      elements.searchNotice.textContent = '';
+      searchedIndices = [];
+      foundHeapIndex = -1;
+      const pending = [0];
+      while (pending.length) {
+        const index = pending.pop();
+        const value = heap[index];
+        searchedIndices.push(index);
+        if (value === target) {
+          foundHeapIndex = index;
+          break;
+        }
+        if (value < target) continue;
+        const right = index * 2 + 2;
+        const left = index * 2 + 1;
+        if (right < heap.length) pending.push(right);
+        if (left < heap.length) pending.push(left);
+      }
+
+      elements.heapSearchResult.textContent = foundHeapIndex >= 0
+        ? `找到 ${target}，檢查 ${searchedIndices.length} 個節點。`
+        : `找不到 ${target}，檢查 ${searchedIndices.length} 個節點。`;
+
+      const sorted = [...heap];
+      let sortComparisons = 0;
+      let swaps = 0;
+      for (let end = sorted.length - 1; end > 0; end -= 1) {
+        let changed = false;
+        for (let index = 0; index < end; index += 1) {
+          sortComparisons += 1;
+          if (sorted[index] <= sorted[index + 1]) continue;
+          [sorted[index], sorted[index + 1]] = [sorted[index + 1], sorted[index]];
+          swaps += 1;
+          changed = true;
+        }
+        if (!changed) break;
+      }
+
+      let low = 0;
+      let high = sorted.length - 1;
+      let binaryComparisons = 0;
+      let sortedIndex = -1;
+      while (low <= high) {
+        const middle = Math.floor((low + high) / 2);
+        binaryComparisons += 1;
+        if (sorted[middle] === target) {
+          sortedIndex = middle;
+          break;
+        }
+        binaryComparisons += 1;
+        if (sorted[middle] < target) low = middle + 1;
+        else high = middle - 1;
+      }
+      const totalComparisons = sortComparisons + binaryComparisons;
+      elements.bubbleSearchResult.textContent = sortedIndex >= 0
+        ? `找到 ${target}；氣泡排序 ${sortComparisons} 次比較、${swaps} 次交換，二分搜尋 ${binaryComparisons} 次比較（合計 ${totalComparisons} 次）。`
+        : `找不到 ${target}；氣泡排序 ${sortComparisons} 次比較、${swaps} 次交換，二分搜尋 ${binaryComparisons} 次比較（合計 ${totalComparisons} 次）。`;
+      renderHeap();
+    });
+
+    elements.resetButton.addEventListener('click', () => {
+      heap = [];
+      searchedIndices = [];
+      foundHeapIndex = -1;
+      elements.sequenceInput.value = '';
+      elements.addInput.value = '';
+      elements.targetInput.value = '';
+      elements.sequenceNotice.textContent = '';
+      elements.addNotice.textContent = '';
+      elements.searchNotice.textContent = '';
+      elements.heapSearchResult.textContent = '輸入目標值後開始比較。';
+      elements.bubbleSearchResult.textContent = '先排序，再搜尋目標值。';
+      renderHeap();
+    });
+
+    const initialValues = parseSequence(elements.sequenceInput.value);
+    heap = buildHeap(initialValues ?? []);
+    elements.sequenceNotice.textContent = `已建立 ${heap.length} 個節點的最大堆積。`;
+    renderHeap();
+  </script>
+</body>
+</html>
